@@ -7,10 +7,12 @@
 int main()
 {
 	// path to our dll
-	LPCSTR DllPath = "D:\\projects\\standardinjection\\release\\testlib.dll";
+	LPCSTR DllPath = "C:/Users/TheMulti0/Documents/Programming/StandardInjection/bin/testlib.dll";
+
+	int processId = 1012;
 
 	// Open a handle to target process
-	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, 17344);
+	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
 
 	// Allocate memory for the dllpath in the target process
 	// length of the path string + null terminator
