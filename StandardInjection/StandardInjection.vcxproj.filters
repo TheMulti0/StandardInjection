@@ -3,8 +3,10 @@
   <ItemGroup>
     <ClCompile Include="StandardInjection.cpp" />
     <ClCompile Include="ProcessMemoryAllocation.cpp" />
+    <ClCompile Include="UniqueHandle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ProcessMemoryAllocation.h" />
+    <ClInclude Include="UniqueHandle.h" />
   </ItemGroup>
 </Project>

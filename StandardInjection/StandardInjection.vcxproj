@@ -104,6 +104,8 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,9 +151,11 @@
   <ItemGroup>
     <ClCompile Include="ProcessMemoryAllocation.cpp" />
     <ClCompile Include="StandardInjection.cpp" />
+    <ClCompile Include="UniqueHandle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ProcessMemoryAllocation.h" />
+    <ClInclude Include="UniqueHandle.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
