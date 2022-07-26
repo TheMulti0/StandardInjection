@@ -86,7 +86,7 @@ int main()
 			process.get(),
 			nullptr, 
 			0,
-			(LPTHREAD_START_ROUTINE) procAddress,
+			(LPTHREAD_START_ROUTINE)LoadLibraryA,
 			dll.GetPointer(),
 			0, 
 			nullptr));
