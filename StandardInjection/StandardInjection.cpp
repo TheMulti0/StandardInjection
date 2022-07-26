@@ -4,10 +4,24 @@
 #include <iostream>
 #include <Windows.h>
 
+#include "ProcessMemoryAllocation.h"
+
+std::string GetDllPath()
+{
+	const auto dllName = std::string("testlib.dll");
+
+	const auto dllPath = _fullpath(
+		nullptr, 
+		dllName.c_str(), 
+		_MAX_PATH);
+
+	return { dllPath };
+}
+
 int main()
 {
-	// path to our dll
-	LPCSTR DllPath = "C:/Users/TheMulti0/Documents/Programming/StandardInjection/bin/testlib.dll";
+	const auto dllPath = GetDllPath();
+	const auto dllPathLength = dllPath.size() + 1;
 
 	int processId = 1012;
 
@@ -16,28 +30,23 @@ int main()
 
 	// Allocate memory for the dllpath in the target process
 	// length of the path string + null terminator
-	LPVOID pDllPath = VirtualAllocEx(hProcess, 0, strlen(DllPath) + 1,
-		MEM_COMMIT, PAGE_READWRITE);
+	const auto dll = ProcessMemoryAllocation(hProcess, nullptr, dllPathLength);
 
 	// Write the path to the address of the memory we just allocated
 	// in the target process
-	WriteProcessMemory(hProcess, pDllPath, (LPVOID)DllPath,
-		strlen(DllPath) + 1, 0);
+	dll.Write(dllPath.data(), dllPathLength);
 
 	// Create a Remote Thread in the target process which
 	// calls LoadLibraryA as our dllpath as an argument -> program loads our dll
 	HANDLE hLoadThread = CreateRemoteThread(hProcess, 0, 0,
 		(LPTHREAD_START_ROUTINE)GetProcAddress(GetModuleHandleA("Kernel32.dll"),
-			"LoadLibraryA"), pDllPath, 0, 0);
+			"LoadLibraryA"), dll.GetPointer(), 0, 0);
 
 	// Wait for the execution of our loader thread to finish
 	WaitForSingleObject(hLoadThread, INFINITE);
 
-	std::cout << "Dll path allocated at: " << std::hex << pDllPath << std::endl;
+	std::cout << "Dll path allocated at: " << std::hex << dll.GetPointer() << std::endl;
 	std::cin.get();
-
-	// Free the memory allocated for our dll path
-	VirtualFreeEx(hProcess, pDllPath, strlen(DllPath) + 1, MEM_RELEASE);
 
 	return 0;
 }

@@ -147,7 +147,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ProcessMemoryAllocation.cpp" />
     <ClCompile Include="StandardInjection.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ProcessMemoryAllocation.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
