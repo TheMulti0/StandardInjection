@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <Windows.h>
+#include <psapi.h>
 
 #include "ProcessMemoryAllocation.h"
 
@@ -23,10 +24,24 @@ int main()
 	const auto dllPath = GetDllPath();
 	const auto dllPathLength = dllPath.size() + 1;
 
-	int processId = 1012;
+	int processId = 12148;
 
 	// Open a handle to target process
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
+
+	TCHAR szProcessName[MAX_PATH];
+	if (NULL != hProcess)
+	{
+		HMODULE hMod;
+		DWORD cbNeeded;
+
+		if (EnumProcessModules(hProcess, &hMod, sizeof(hMod),
+			&cbNeeded))
+		{
+			GetModuleBaseName(hProcess, hMod, szProcessName,
+				sizeof(szProcessName) / sizeof(TCHAR));
+		}
+	}
 
 	// Allocate memory for the dllpath in the target process
 	// length of the path string + null terminator
@@ -34,13 +49,13 @@ int main()
 
 	// Write the path to the address of the memory we just allocated
 	// in the target process
-	dll.Write(dllPath.data(), dllPathLength);
+	dll.Write(dllPath.c_str(), dllPathLength);
 
 	// Create a Remote Thread in the target process which
 	// calls LoadLibraryA as our dllpath as an argument -> program loads our dll
 	HANDLE hLoadThread = CreateRemoteThread(hProcess, 0, 0,
 		(LPTHREAD_START_ROUTINE)GetProcAddress(GetModuleHandleA("Kernel32.dll"),
-			"LoadLibraryA"), dll.GetPointer(), 0, 0);
+			"LoadLibraryA"), dll.GetPointer(), 0, nullptr);
 
 	// Wait for the execution of our loader thread to finish
 	WaitForSingleObject(hLoadThread, INFINITE);

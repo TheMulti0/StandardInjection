@@ -1,5 +1,7 @@
 #include "ProcessMemoryAllocation.h"
 
+#include <cstdio>
+
 ProcessMemoryAllocation::ProcessMemoryAllocation(
 	const HANDLE process, 
 	void* offset,
@@ -20,7 +22,6 @@ ProcessMemoryAllocation::~ProcessMemoryAllocation()
 {
 	if (!VirtualFreeEx(_process, _ptr, 0, MEM_RELEASE))
 	{
-		throw;
 	}
 }
 
@@ -33,6 +34,9 @@ void ProcessMemoryAllocation::Write(const void* buffer, const size_t size) const
 		size, 
 		nullptr))
 	{
+		DWORD error = GetLastError();
+		printf("%d", error);
+;		throw;
 	}
 }
 
