@@ -19,12 +19,50 @@ std::string GetDllPath()
 	return { dllPath };
 }
 
+std::wstring ToWString(const std::string& s)
+{
+	const auto size = s.size() + 1;
+
+	const int len = MultiByteToWideChar(
+		CP_ACP, 
+		0, 
+		s.c_str(), 
+		size, 
+		nullptr, 
+		0);
+
+	std::wstring r(len, L'\0');
+
+	MultiByteToWideChar(
+		CP_ACP, 
+		0,
+		s.c_str(),
+		size, 
+		&r[0], 
+		len);
+
+	return r;
+}
+
+int GetProcessId(const std::string& windowTitle)
+{
+	const std::wstring wWindowTitle = ToWString(windowTitle);
+	DWORD processId;
+
+	GetWindowThreadProcessId(
+		FindWindow(nullptr, wWindowTitle.c_str()),
+		&processId);
+
+	return processId;
+}
+
 int main()
 {
 	const auto dllPath = GetDllPath();
 	const auto dllPathLength = dllPath.size() + 1;
 
-	const int processId = 1844;
+	const auto windowName = std::string("Untitled - Notepad");
+	const int processId = GetProcessId(windowName);
 
 	// Open a handle to target process
 	const auto process = MakeUniqueHandle(
