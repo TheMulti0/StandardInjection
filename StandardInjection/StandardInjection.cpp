@@ -44,7 +44,7 @@ std::wstring ToWString(const std::string& s)
 	return r;
 }
 
-int GetProcessId(const std::string& windowTitle)
+int* GetProcessId(const std::string& windowTitle)
 {
 	const std::wstring wWindowTitle = ToWString(windowTitle);
 	DWORD processId;
@@ -53,20 +53,41 @@ int GetProcessId(const std::string& windowTitle)
 		FindWindow(nullptr, wWindowTitle.c_str()),
 		&processId);
 
-	return processId;
+	return new int(processId);
+}
+
+void HandleError()
+{
+	int lastError = GetLastError();
+	printf("Last error: %d", lastError);
+	throw;
 }
 
 int main()
 {
-	const auto dllPath = GetDllPath();
+	const auto dllPath = ToWString(GetDllPath());
+	if (dllPath.empty())
+	{
+		HandleError();
+	}
 	const auto dllPathLength = dllPath.size() + 1;
 
 	const auto windowName = std::string("Untitled - Notepad");
-	const int processId = GetProcessId(windowName);
+	const int* pProcessId = GetProcessId(windowName);
+	if (pProcessId == nullptr)
+	{
+		HandleError();
+	}
+
+	const int processId = *pProcessId;
 
 	// Open a handle to target process
 	const auto process = MakeUniqueHandle(
 		OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId));
+	if (process.get() == nullptr)
+	{
+		HandleError();
+	}
 
 	// Allocate memory for the dllpath in the target process
 	// length of the path string + null terminator
@@ -74,6 +95,10 @@ int main()
 
 	// Write the path to the address of the memory we just allocated
 	// in the target process
+	char* sttr = new char[dllPathLength];
+	std::ranges::copy(dllPath, sttr);
+	sttr[dllPathLength - 1] = '\0';
+
 	dll.Write(dllPath.c_str(), dllPathLength);
 
 	const auto procAddress = GetProcAddress(
@@ -81,18 +106,27 @@ int main()
 		"LoadLibraryA");
 	// Create a Remote Thread in the target process which
 	// calls LoadLibraryA as our dllpath as an argument -> program loads our dll
+
 	const auto loadThread = MakeUniqueHandle(
 		CreateRemoteThread(
 			process.get(),
 			nullptr, 
 			0,
-			(LPTHREAD_START_ROUTINE)LoadLibraryA,
+			(LPTHREAD_START_ROUTINE)procAddress,
 			dll.GetPointer(),
 			0, 
 			nullptr));
 
+	if (loadThread.get() == nullptr)
+	{
+		HandleError();
+	}
+
 	// Wait for the execution of our loader thread to finish
 	WaitForSingleObject(loadThread.get(), INFINITE);
+
+	DWORD ret = 0;
+	GetExitCodeThread(loadThread.get(), &ret);
 
 	std::cout << "Dll path allocated at: " << std::hex << dll.GetPointer() << std::endl;
 	std::cin.get();
