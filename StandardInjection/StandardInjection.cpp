@@ -5,12 +5,13 @@
 #include <iostream>
 #include <Windows.h>
 
+#include "InjectedDll.h"
 #include "ProcessMemoryAllocation.h"
 #include "UniqueHandle.h"
 
 std::wstring ToWString(const std::string& s)
 {
-	const auto size = s.size() + 1;
+	const auto size = s.size();
 
 	const int len = MultiByteToWideChar(
 		CP_ACP, 
@@ -45,6 +46,11 @@ int* GetProcessId(const std::string& windowTitle)
 	return new int(processId);
 }
 
+int strcompare(const char* One, const char* Two)
+{
+	return _stricmp(One, Two);
+}
+
 void HandleError()
 {
 	int lastError = GetLastError();
@@ -54,8 +60,9 @@ void HandleError()
 
 int main()
 {
-	const auto dllName = "../bin/testlib.dll";
-	const auto dllFile = std::filesystem::path(dllName);
+	const std::string dllName = "testlib.dll";
+	const std::string relativeDllPath = "../bin/" + dllName;
+	const auto dllFile = std::filesystem::path(relativeDllPath);
 
 	if (!exists(dllFile))
 	{
@@ -94,32 +101,18 @@ int main()
 	// in the target process
 	dll.Write(dllPath.c_str(), dllPathLength);
 
-	const auto procAddress = GetProcAddress(
-		GetModuleHandleA("Kernel32.dll"), 
-		"LoadLibraryA");
-	// Create a Remote Thread in the target process which
-	// calls LoadLibraryA as our dllpath as an argument -> program loads our dll
+	const auto injected = InjectedDll(
+		processId, 
+		process.get(),
+		ToWString(dllName),
+		dll.GetPointer());
 
-	const auto loadThread = MakeUniqueHandle(
-		CreateRemoteThread(
-			process.get(),
-			0, 
-			0,
-			(LPTHREAD_START_ROUTINE)procAddress,
-			dll.GetPointer(),
-			0, 
-			0));
-
-	if (loadThread.get() == nullptr)
+	/*if (loadThread.get() == nullptr)
 	{
 		HandleError();
 	}
-
-	// Wait for the execution of our loader thread to finish
-	WaitForSingleObject(loadThread.get(), INFINITE);
-
 	DWORD ret = 0;
-	GetExitCodeThread(loadThread.get(), &ret);
+	GetExitCodeThread(loadThread.get(), &ret);*/
 
 	std::cout << "Dll path allocated at: " << std::hex << dll.GetPointer() << std::endl;
 	std::cin.get();

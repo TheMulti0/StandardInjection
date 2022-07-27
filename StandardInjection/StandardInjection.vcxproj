@@ -149,11 +149,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="InjectedDll.cpp" />
     <ClCompile Include="ProcessMemoryAllocation.cpp" />
     <ClCompile Include="StandardInjection.cpp" />
     <ClCompile Include="UniqueHandle.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="InjectedDll.h" />
     <ClInclude Include="ProcessMemoryAllocation.h" />
     <ClInclude Include="UniqueHandle.h" />
   </ItemGroup>

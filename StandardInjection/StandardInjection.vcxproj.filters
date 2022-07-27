@@ -4,9 +4,11 @@
     <ClCompile Include="StandardInjection.cpp" />
     <ClCompile Include="ProcessMemoryAllocation.cpp" />
     <ClCompile Include="UniqueHandle.cpp" />
+    <ClCompile Include="InjectedDll.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ProcessMemoryAllocation.h" />
     <ClInclude Include="UniqueHandle.h" />
+    <ClInclude Include="InjectedDll.h" />
   </ItemGroup>
 </Project>

@@ -22,6 +22,7 @@ ProcessMemoryAllocation::~ProcessMemoryAllocation()
 {
 	if (!VirtualFreeEx(_process, _ptr, 0, MEM_RELEASE))
 	{
+		throw;
 	}
 }
 
