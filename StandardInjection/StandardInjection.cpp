@@ -1,23 +1,12 @@
 // StandardInjection.cpp : Defines the entry point for the console application.
 //
 
+#include <filesystem>
 #include <iostream>
 #include <Windows.h>
 
 #include "ProcessMemoryAllocation.h"
 #include "UniqueHandle.h"
-
-std::string GetDllPath()
-{
-	const auto dllName = std::string("testlib.dll");
-
-	char* const dllPath = _fullpath(
-		nullptr,
-		dllName.c_str(),
-		_MAX_PATH);
-
-	return { dllPath };
-}
 
 std::wstring ToWString(const std::string& s)
 {
@@ -65,7 +54,15 @@ void HandleError()
 
 int main()
 {
-	const auto dllPath = ToWString(GetDllPath());
+	const auto dllName = "../bin/testlib.dll";
+	const auto dllFile = std::filesystem::path(dllName);
+
+	if (!exists(dllFile))
+	{
+		HandleError();
+	}
+
+	const auto dllPath = canonical(dllFile).generic_string();
 	if (dllPath.empty())
 	{
 		HandleError();
@@ -95,10 +92,6 @@ int main()
 
 	// Write the path to the address of the memory we just allocated
 	// in the target process
-	char* sttr = new char[dllPathLength];
-	std::ranges::copy(dllPath, sttr);
-	sttr[dllPathLength - 1] = '\0';
-
 	dll.Write(dllPath.c_str(), dllPathLength);
 
 	const auto procAddress = GetProcAddress(
@@ -110,12 +103,12 @@ int main()
 	const auto loadThread = MakeUniqueHandle(
 		CreateRemoteThread(
 			process.get(),
-			nullptr, 
+			0, 
 			0,
 			(LPTHREAD_START_ROUTINE)procAddress,
 			dll.GetPointer(),
 			0, 
-			nullptr));
+			0));
 
 	if (loadThread.get() == nullptr)
 	{

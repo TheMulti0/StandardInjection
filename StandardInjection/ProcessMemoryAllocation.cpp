@@ -34,7 +34,7 @@ void ProcessMemoryAllocation::Write(const void* buffer, const size_t size) const
 		size, 
 		nullptr))
 	{
-		DWORD error = GetLastError();
+		const DWORD error = GetLastError();
 		printf("%d", error);
 ;		throw;
 	}
