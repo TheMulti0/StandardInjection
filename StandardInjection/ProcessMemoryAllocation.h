@@ -14,7 +14,7 @@ public:
 
 	void Write(const void* buffer, size_t size) const;
 
-	void* GetPointer() const;
+	[[nodiscard]] void* GetPointer() const;
 
 private:
 	HANDLE _process;

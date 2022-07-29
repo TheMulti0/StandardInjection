@@ -18,9 +18,9 @@ public:
 	~InjectedDll();
 
 private:
-	static MODULEENTRY32 GetModuleInfo(int processId, const std::wstring& moduleName);
+	static std::unique_ptr<MODULEENTRY32W> GetModuleInfo(int processId, const std::wstring& moduleName);
 
-	MODULEENTRY32 GetModuleInfo() const;
+	[[nodiscard]] std::unique_ptr<MODULEENTRY32W> GetModuleInfo() const;
 
 	int _processId;
 	HANDLE _process;

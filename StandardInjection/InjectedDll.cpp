@@ -1,5 +1,7 @@
 #include "InjectedDll.h"
 
+#include "Extensions.h"
+
 InjectedDll::InjectedDll(const int processId, const HANDLE process, std::wstring dllName, void* dllNameBuffer):
 	_processId(processId),
 	_process(process),
@@ -17,7 +19,7 @@ InjectedDll::InjectedDll(const int processId, const HANDLE process, std::wstring
 {
 	if (_loadThread.get() == nullptr)
 	{
-		throw;
+		ThrowRuntimeException("Failed to create remote thread in process");
 	}
 
 	WaitForSingleObject(_loadThread.get(), INFINITE);
@@ -27,20 +29,32 @@ InjectedDll::~InjectedDll()
 {
 	const auto moduleInfo = GetModuleInfo();
 
+	if (moduleInfo == nullptr)
+	{
+		ThrowRuntimeException("Unable to find module info of dll %s", _dllName);
+	}
+
 	const auto unloadThread = MakeUniqueHandle(
 		CreateRemoteThread(
 			_process,
 			nullptr,
 			0,
 			reinterpret_cast<LPTHREAD_START_ROUTINE>(FreeLibrary),
-			moduleInfo.hModule,
+			moduleInfo->hModule,
 			0,
 			nullptr));
+
+	if (unloadThread.get() == nullptr)
+	{
+		ThrowRuntimeException("Failed to create remote thread in process");
+	}
 
 	WaitForSingleObject(unloadThread.get(), INFINITE);
 }
 
-MODULEENTRY32W InjectedDll::GetModuleInfo(int processId, const std::wstring& moduleName)
+std::unique_ptr<MODULEENTRY32W> InjectedDll::GetModuleInfo(
+	int processId, 
+	const std::wstring& moduleName)
 {
 	MODULEENTRY32 moduleInfo = { 0 };
 
@@ -49,7 +63,7 @@ MODULEENTRY32W InjectedDll::GetModuleInfo(int processId, const std::wstring& mod
 
 	if (snapshot.get() == INVALID_HANDLE_VALUE)
 	{
-		return moduleInfo;
+		return nullptr;
 	}
 
 	moduleInfo.dwSize = sizeof(MODULEENTRY32);
@@ -58,15 +72,14 @@ MODULEENTRY32W InjectedDll::GetModuleInfo(int processId, const std::wstring& mod
 	{
 		if (std::wstring(moduleInfo.szModule) == moduleName)
 		{
-			return moduleInfo;
+			return std::make_unique<MODULEENTRY32W>(moduleInfo);
 		}
 	}
 
-	moduleInfo = { 0 };
-	return moduleInfo;
+	return nullptr;
 }
 
-MODULEENTRY32W InjectedDll::GetModuleInfo() const
+std::unique_ptr<MODULEENTRY32W> InjectedDll::GetModuleInfo() const
 {
 	return GetModuleInfo(_processId, _dllName);
 }

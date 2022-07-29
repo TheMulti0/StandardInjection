@@ -1,6 +1,6 @@
 #include "ProcessMemoryAllocation.h"
 
-#include <cstdio>
+#include "Extensions.h"
 
 ProcessMemoryAllocation::ProcessMemoryAllocation(
 	const HANDLE process, 
@@ -22,7 +22,7 @@ ProcessMemoryAllocation::~ProcessMemoryAllocation()
 {
 	if (!VirtualFreeEx(_process, _ptr, 0, MEM_RELEASE))
 	{
-		throw;
+		ThrowWinApiException("Failed to free pointer to %d", _ptr);
 	}
 }
 
@@ -35,9 +35,7 @@ void ProcessMemoryAllocation::Write(const void* buffer, const size_t size) const
 		size, 
 		nullptr))
 	{
-		const DWORD error = GetLastError();
-		printf("%d", error);
-;		throw;
+		ThrowWinApiException("Failed to write buffer with size %d to pointer %d", size, _ptr);
 	}
 }
 
